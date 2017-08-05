@@ -1,9 +1,9 @@
-;;; ox-clip.el --- Cross-platform Formatted copy commands for org-mode
+;;; ox-clip.el --- Cross-platform formatted copying for org-mode
 
 ;; Copyright(C) 2016 John Kitchin
 
 ;; Author: John Kitchin <jkitchin@andrew.cmu.edu>
-;; URL: https://github.com/jkitchin/scimax/ox-clip.el
+;; URL: https://github.com/jkitchin/ox-clip/ox-clip.el
 ;; Version: 0.3
 ;; Keywords: org-mode
 ;; Package-Requires: ((org "8.2") (htmlize "0"))
