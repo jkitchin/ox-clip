@@ -1,4 +1,4 @@
-#+TITLE: ox-clip --  --- Cross-platform Formatted copy commands for org-mode
+#+TITLE: ox-clip - Cross-platform Formatted copy commands for org-mode
 #+AUTHOR: John Kitchin
 #+DATE: August 5, 2017
 
