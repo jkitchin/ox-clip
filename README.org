@@ -11,3 +11,18 @@ Mac OSX needs textutils and pbcopy, which should be part of the standard utiliti
 Linux needs a relatively modern xclip. https://github.com/astrand/xclip
 
 There is one command: =ox-clip-formatted-copy that should work across Windows, Mac and Linux. I recommend you bind this to a key. I like H-k (Hyper-k).
+
+Note: This file was extracted from https://github.com/jkitchin/scimax to make a smaller repo for MELPA (see https://github.com/jkitchin/scimax/issues/21). I extracted it using this git wizardry from: http://www.pixelite.co.nz/article/extracting-file-folder-from-git-repository-with-full-git-history/. This seems to have retained the history on the file modifications.
+
+
+#+BEGIN_SRC sh
+cd /path/to/scimax
+git log --pretty=email --patch-with-stat --reverse --full-index --binary -- ox-clip.el > /tmp/patch
+
+cd ~/tmp
+mkdir ox-clip
+git init
+git am < /tmp/patch
+git remote add origin git@github.com:jkitchin/ox-clip.git
+git push -f origin master
+#+END_SRC
