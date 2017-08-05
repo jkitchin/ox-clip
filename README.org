@@ -1,0 +1,13 @@
+#+TITLE: ox-clip --  --- Cross-platform Formatted copy commands for org-mode
+#+AUTHOR: John Kitchin
+#+DATE: August 5, 2017
+
+This module copies selected regions in org-mode as formatted text on the clipboard that can be pasted into other applications. When not in org-mode, the htmlize library is used instead.
+
+For Windows the html-clip-w32.py script will be installed in the ox-clip install directory. It works pretty well, but I noticed that the hyperlinks in the TOC to headings don't work, and strike-through doesn't seem to work. I have no idea how to fix either issue.
+
+Mac OSX needs textutils and pbcopy, which should be part of the standard utilities available on MacOSX.
+
+Linux needs a relatively modern xclip. https://github.com/astrand/xclip
+
+There is one command: =ox-clip-formatted-copy that should work across Windows, Mac and Linux. I recommend you bind this to a key. I like H-k (Hyper-k).
