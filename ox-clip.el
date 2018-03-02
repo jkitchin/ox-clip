@@ -79,7 +79,6 @@
   "Command to copy formatted text on linux."
   :group 'ox-clip)
 
-
 (defvar ox-clip-w32-py "#!/usr/bin/env python
 # Adapted from http://code.activestate.com/recipes/474121-getting-html-from-the-windows-clipboard/
 # HtmlClipboard
@@ -352,6 +351,11 @@ if __name__ == '__main__':
 "
   "Windows Python Script for copying formatted text.")
 
+(defcustom ox-clip-default-latex-scale 3
+  "Default scale to use in `org-format-latex-options' when
+  creating preview images for copying."
+  :group 'ox-clip)
+
 ;; Create the windows python script if needed.
 (when (and (eq system-type 'windows-nt)
 	   (not (file-exists-p (expand-file-name
@@ -371,7 +375,8 @@ R1 and R2 define the selected region."
   (copy-region-as-kill r1 r2)
   (if (equal major-mode 'org-mode)
       (save-window-excursion
-        (let* ((buf (org-export-to-buffer 'html "*Formatted Copy*" nil nil t t))
+        (let* ((org-html-with-latex 'dvipng)
+	       (buf (org-export-to-buffer 'html "*Formatted Copy*" nil nil t t))
                (html (with-current-buffer buf (buffer-string))))
           (cond
            ((eq system-type 'windows-nt)
