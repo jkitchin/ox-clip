@@ -38,10 +38,17 @@
 
 ;; Mac OSX needs textutils and pbcopy, which should be part of the base install.
 
-;; Linux needs a relatively modern xclip. https://github.com/astrand/xclip
+;; Linux needs a relatively modern xclip, preferrably a version of at least
+;; 0.12. https://github.com/astrand/xclip
 
-;; There is one command: `ox-clip-formatted-copy' that should work across
-;; Windows, Mac and Linux.
+;; The main command is `ox-clip-formatted-copy' that should work across
+;; Windows, Mac and Linux. By default, it copies as html. 
+;;
+;; Note: Images/equations may not copy well. Use `ox-clip-image-to-clipboard' to
+;; copy the image or latex equation at point to the clipboard as an image. The
+;; default latex scale is too small for me, so the default size for this is set
+;; to 3 in `ox-clip-default-latex-scale'. This overrides the settings in
+;; `org-format-latex-options'.
 
 (require 'htmlize)
 
@@ -71,7 +78,6 @@
   "xclip -verbose -i /tmp/ox-clip-org.html -t text/html -selection clipboard"
   "Command to copy formatted text on linux."
   :group 'ox-clip)
-
 
 (defvar ox-clip-w32-py "#!/usr/bin/env python
 # Adapted from http://code.activestate.com/recipes/474121-getting-html-from-the-windows-clipboard/
@@ -345,6 +351,11 @@ if __name__ == '__main__':
 "
   "Windows Python Script for copying formatted text.")
 
+(defcustom ox-clip-default-latex-scale 3
+  "Default scale to use in `org-format-latex-options' when
+  creating preview images for copying."
+  :group 'ox-clip)
+
 ;; Create the windows python script if needed.
 (when (and (eq system-type 'windows-nt)
 	   (not (file-exists-p (expand-file-name
@@ -364,7 +375,8 @@ R1 and R2 define the selected region."
   (copy-region-as-kill r1 r2)
   (if (equal major-mode 'org-mode)
       (save-window-excursion
-        (let* ((buf (org-export-to-buffer 'html "*Formatted Copy*" nil nil t t))
+        (let* ((org-html-with-latex 'dvipng)
+	       (buf (org-export-to-buffer 'html "*Formatted Copy*" nil nil t t))
                (html (with-current-buffer buf (buffer-string))))
           (cond
            ((eq system-type 'windows-nt)
@@ -410,6 +422,56 @@ R1 and R2 define the selected region."
         (apply
          'start-process "ox-clip" "*ox-clip*"
          (split-string ox-clip-linux-cmd " ")))))))
+
+
+;; * copy images / latex fragments to the clipboard
+
+(defun ox-clip-image-to-clipboard (&optional scale)
+  "Copy the image file or latex fragment at point to the clipboard as an image.
+SCALE is a numerical prefix (default=1) that determines the size
+of the latex image. It has no effect on other kinds of images.
+Currently only works on Linux."
+  (interactive "P")
+  (let* ((el (org-element-context))
+	 (image-file (cond
+		      ;; on a latex fragment
+		      ((eq 'latex-fragment (org-element-type el))
+		       (when (ov-at) (org-toggle-latex-fragment))
+
+		       ;; should be no image, so we rebuild one
+		       (let ((current-scale (plist-get org-format-latex-options :scale))
+			     ov display file relfile)
+			 (plist-put org-format-latex-options :scale
+				    (or scale ox-clip-default-latex-scale))
+			 (org-toggle-latex-fragment)
+			 (plist-put org-format-latex-options :scale current-scale)
+
+			 (setq ov (ov-at)
+			       display (overlay-get ov 'display)
+			       file (plist-get (cdr display) :file))
+			 (file-relative-name file)))
+		      ;; At a link of an image
+		      ((and (eq 'link (org-element-type el))
+			    (string= "file" (org-element-property :type el))
+			    (string-match (cdr (assoc "file" org-html-inline-image-rules))
+					  (org-element-property :path el)))
+		       (file-relative-name (org-element-property :path el)))
+		      ;; not sure what else we can do here. Maybe any overlay
+		      ;; with a display that is an image would work.
+		      (t
+		       nil))))
+    (when image-file
+      (cond
+       ((eq system-type 'windows-nt)
+	(message "Not supported yet."))
+       ((eq system-type 'darwin)
+	(message "Not supported yet"))
+       ((eq system-type 'gnu/linux)
+	(call-process-shell-command
+	 (format "xclip -selection clipboard -t image/%s -i %s"
+		 (file-name-extension image-file)
+		 image-file))))) 
+    (message "Copied %s" image-file)))
 
 (provide 'ox-clip)
 
