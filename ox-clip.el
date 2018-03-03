@@ -456,8 +456,16 @@ Currently only works on Linux."
 			    (string-match (cdr (assoc "file" org-html-inline-image-rules))
 					  (org-element-property :path el)))
 		       (file-relative-name (org-element-property :path el)))
-		      ;; not sure what else we can do here. Maybe any overlay
-		      ;; with a display that is an image would work.
+		      ;; at an overlay with a display that is an image
+		      ((and (ov-at)
+			    (overlay-get (ov-at) 'display)
+			    (plist-get (cdr (overlay-get (ov-at) 'display)) :file)
+			    (string-match (cdr (assoc "file" org-html-inline-image-rules))
+					  (plist-get (cdr (overlay-get (ov-at) 'display))
+						     :file)))
+		       (file-relative-name (plist-get (cdr (overlay-get (ov-at) 'display))
+						      :file)))
+		      ;; not sure what else we can do here.
 		      (t
 		       nil))))
     (when image-file
