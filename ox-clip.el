@@ -425,7 +425,7 @@ R1 and R2 define the selected region."
 
 
 ;; * copy images / latex fragments to the clipboard
-
+;;;###autoload
 (defun ox-clip-image-to-clipboard (&optional scale)
   "Copy the image file or latex fragment at point to the clipboard as an image.
 SCALE is a numerical prefix (default=1) that determines the size
