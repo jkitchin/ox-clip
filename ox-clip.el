@@ -437,14 +437,14 @@ images. Currently only works on Linux."
 	 (image-file (cond
 		      ;; on a latex fragment
 		      ((eq 'latex-fragment (org-element-type el))
-		       (when (ov-at) (org-toggle-latex-fragment))
+		       (when (ov-at) (org-latex-preview))
 
 		       ;; should be no image, so we rebuild one
 		       (let ((current-scale (plist-get org-format-latex-options :scale))
 			     ov display file relfile)
 			 (plist-put org-format-latex-options :scale
 				    (or scale ox-clip-default-latex-scale))
-			 (org-toggle-latex-fragment)
+			 (org-latex-preview)
 			 (plist-put org-format-latex-options :scale current-scale)
 
 			 (setq ov (ov-at)
