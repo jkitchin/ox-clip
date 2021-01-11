@@ -65,19 +65,24 @@
 	   "html-clip-w32.py"
 	   (file-name-directory (or load-file-name (locate-library "ox-clip")))))
   "Absolute path to html-clip-w32.py."
-  :group 'ox-clip)
+  :group 'ox-clip
+  :type string)
 
 
 (defcustom ox-clip-osx-cmd
   "textutil -inputencoding UTF-8 -stdin -format html -convert rtf -stdout | pbcopy"
   "Command to copy formatted text on osX."
-  :group 'ox-clip)
+  :group 'ox-clip
+  :type string)
 
 
 (defcustom ox-clip-linux-cmd
-  "xclip -verbose -i /tmp/ox-clip-org.html -t text/html -selection clipboard"
-  "Command to copy formatted text on linux."
-  :group 'ox-clip)
+  "xclip -verbose -i %f -t text/html -selection clipboard"
+  "Command to copy formatted text on linux.
+You must include %f. It will be converted to a generated
+temporary filename later."
+  :group 'ox-clip
+  :type 'string)
 
 (defvar ox-clip-w32-py "#!/usr/bin/env python
 # Adapted from http://code.activestate.com/recipes/474121-getting-html-from-the-windows-clipboard/
@@ -393,11 +398,12 @@ R1 and R2 define the selected region."
                ox-clip-osx-cmd)))
            ((eq system-type 'gnu/linux)
             ;; For some reason shell-command on region does not work with xclip.
-            (with-temp-file "/tmp/ox-clip-org.html"
-              (insert (with-current-buffer buf (buffer-string))))
-            (apply
-             'start-process "ox-clip" "*ox-clip*"
-             (split-string ox-clip-linux-cmd " "))))
+	    (let ((tmpfile (make-temp-file "ox-clip-" nil ".html"
+					   (with-current-buffer buf (buffer-string)))))
+              (apply
+               'start-process "ox-clip" "*ox-clip*"
+               (split-string (format-spec ox-clip-linux-cmd
+					  `((?f . ,tmpfile))) " ")))))
           (kill-buffer buf)))
     ;; Use htmlize when not in org-mode.
     (let ((html (htmlize-region-for-paste r1 r2)))
@@ -417,11 +423,11 @@ R1 and R2 define the selected region."
            (point-max)
            ox-clip-osx-cmd)))
        ((eq system-type 'gnu/linux)
-        (with-temp-file "/tmp/ox-clip-org.html"
-          (insert html))
-        (apply
-         'start-process "ox-clip" "*ox-clip*"
-         (split-string ox-clip-linux-cmd " ")))))))
+	(let ((tmpfile (make-temp-file "ox-clip-" nil ".html" html)))
+          (apply
+           'start-process "ox-clip" "*ox-clip*"
+           (split-string (format-spec ox-clip-linux-cmd
+				      `((?f . ,tmpfile))) " "))))))))
 
 
 ;; * copy images / latex fragments to the clipboard
