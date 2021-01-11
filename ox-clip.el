@@ -357,9 +357,10 @@ if __name__ == '__main__':
   "Windows Python Script for copying formatted text.")
 
 (defcustom ox-clip-default-latex-scale 3
-  "Default scale to use in `org-format-latex-options' when
-  creating preview images for copying."
-  :group 'ox-clip)
+  "Default scale to use in `org-format-latex-options'.
+Used when creating preview images for copying."
+  :group 'ox-clip
+  :type 'number)
 
 ;; Create the windows python script if needed.
 (when (and (eq system-type 'windows-nt)
