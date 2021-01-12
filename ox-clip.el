@@ -399,12 +399,13 @@ R1 and R2 define the selected region."
                ox-clip-osx-cmd)))
            ((eq system-type 'gnu/linux)
             ;; For some reason shell-command on region does not work with xclip.
-	    (let ((tmpfile (make-temp-file "ox-clip-" nil ".html"
-					   (with-current-buffer buf (buffer-string)))))
-              (apply
-               'start-process "ox-clip" "*ox-clip*"
-               (split-string (format-spec ox-clip-linux-cmd
-					  `((?f . ,tmpfile))) " ")))))
+	    (let* ((tmpfile (make-temp-file "ox-clip-" nil ".html"
+					    (with-current-buffer buf (buffer-string))))
+		   (proc (apply
+			  'start-process "ox-clip" "*ox-clip*"
+			  (split-string (format-spec ox-clip-linux-cmd
+						     `((?f . ,tmpfile))) " "))))
+	      (set-process-query-on-exit-flag proc nil))))
           (kill-buffer buf)))
     ;; Use htmlize when not in org-mode.
     (let ((html (htmlize-region-for-paste r1 r2)))
@@ -424,11 +425,12 @@ R1 and R2 define the selected region."
            (point-max)
            ox-clip-osx-cmd)))
        ((eq system-type 'gnu/linux)
-	(let ((tmpfile (make-temp-file "ox-clip-" nil ".html" html)))
-          (apply
-           'start-process "ox-clip" "*ox-clip*"
-           (split-string (format-spec ox-clip-linux-cmd
-				      `((?f . ,tmpfile))) " "))))))))
+	(let* ((tmpfile (make-temp-file "ox-clip-" nil ".html" html))
+	       (proc (apply
+		      'start-process "ox-clip" "*ox-clip*"
+		      (split-string (format-spec ox-clip-linux-cmd
+						 `((?f . ,tmpfile))) " "))))
+	  (set-process-query-on-exit-flag proc nil)))))))
 
 
 ;; * copy images / latex fragments to the clipboard
