@@ -77,7 +77,7 @@
 
 
 (defcustom ox-clip-linux-cmd
-  "xclip -verbose -i %f -t text/html -selection clipboard"
+  "xclip -verbose -i \"%f\" -t text/html -selection clipboard"
   "Command to copy formatted text on linux.
 You must include %f. It will be converted to a generated
 temporary filename later."
