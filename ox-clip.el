@@ -403,8 +403,9 @@ R1 and R2 define the selected region."
 					    (with-current-buffer buf (buffer-string))))
 		   (proc (apply
 			  'start-process "ox-clip" "*ox-clip*"
-			  (split-string (format-spec ox-clip-linux-cmd
-						     `((?f . ,tmpfile))) " "))))
+			  (split-string-and-unquote
+			   (format-spec ox-clip-linux-cmd
+					`((?f . ,tmpfile))) " "))))
 	      (set-process-query-on-exit-flag proc nil))))
           (kill-buffer buf)))
     ;; Use htmlize when not in org-mode.
@@ -428,8 +429,9 @@ R1 and R2 define the selected region."
 	(let* ((tmpfile (make-temp-file "ox-clip-" nil ".html" html))
 	       (proc (apply
 		      'start-process "ox-clip" "*ox-clip*"
-		      (split-string (format-spec ox-clip-linux-cmd
-						 `((?f . ,tmpfile))) " "))))
+		      (split-string-and-unquote
+		       (format-spec ox-clip-linux-cmd
+				    `((?f . ,tmpfile))) " "))))
 	  (set-process-query-on-exit-flag proc nil)))))))
 
 
