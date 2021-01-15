@@ -436,6 +436,10 @@ R1 and R2 define the selected region."
 
 
 ;; * copy images / latex fragments to the clipboard
+(defun ox-clip-ov-at ()
+  "Get overlay at point.  A helper to avoid dependency on ov.el."
+  (car (overlays-at (point))))
+
 ;;;###autoload
 (defun ox-clip-image-to-clipboard (&optional scale)
   "Copy the image file or latex fragment at point to the clipboard as an image.
@@ -448,7 +452,7 @@ images. Currently only works on Linux."
 	 (image-file (cond
 		      ;; on a latex fragment
 		      ((eq 'latex-fragment (org-element-type el))
-		       (when (ov-at) (org-latex-preview))
+		       (when (ox-clip-ov-at) (org-latex-preview))
 
 		       ;; should be no image, so we rebuild one
 		       (let ((current-scale (plist-get org-format-latex-options :scale))
@@ -458,7 +462,7 @@ images. Currently only works on Linux."
 			 (org-latex-preview)
 			 (plist-put org-format-latex-options :scale current-scale)
 
-			 (setq ov (ov-at)
+			 (setq ov (ox-clip-ov-at)
 			       display (overlay-get ov 'display)
 			       file (plist-get (cdr display) :file))
 			 (file-relative-name file)))
@@ -469,13 +473,13 @@ images. Currently only works on Linux."
 					  (org-element-property :path el)))
 		       (file-relative-name (org-element-property :path el)))
 		      ;; at an overlay with a display that is an image
-		      ((and (ov-at)
-			    (overlay-get (ov-at) 'display)
-			    (plist-get (cdr (overlay-get (ov-at) 'display)) :file)
+		      ((and (ox-clip-ov-at)
+			    (overlay-get (ox-clip-ov-at) 'display)
+			    (plist-get (cdr (overlay-get (ox-clip-ov-at) 'display)) :file)
 			    (string-match (cdr (assoc "file" org-html-inline-image-rules))
-					  (plist-get (cdr (overlay-get (ov-at) 'display))
+					  (plist-get (cdr (overlay-get (ox-clip-ov-at) 'display))
 						     :file)))
-		       (file-relative-name (plist-get (cdr (overlay-get (ov-at) 'display))
+		       (file-relative-name (plist-get (cdr (overlay-get (ox-clip-ov-at) 'display))
 						      :file)))
 		      ;; not sure what else we can do here.
 		      (t
