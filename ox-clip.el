@@ -472,6 +472,12 @@ images. Currently only works on Linux."
 			    (string-match (cdr (assoc "file" org-html-inline-image-rules))
 					  (org-element-property :path el)))
 		       (file-relative-name (org-element-property :path el)))
+		      ;; At a link of an image (which is an attachment)
+		      ((and (eq 'link (org-element-type el))
+			    (string= "attachment" (org-element-property :type el))
+			    (string-match (cdr (assoc "file" org-html-inline-image-rules))
+					  (org-element-property :path el)))
+		       (file-relative-name (org-attach-expand (org-element-property :path el))))
 		      ;; at an overlay with a display that is an image
 		      ((and (ox-clip-ov-at)
 			    (overlay-get (ox-clip-ov-at) 'display)
