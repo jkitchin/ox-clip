@@ -1,3 +1,4 @@
+
 ;;; ox-clip.el --- Cross-platform formatted copying for org-mode
 
 ;; Copyright(C) 2016 John Kitchin
@@ -72,6 +73,8 @@
 (defcustom ox-clip-osx-cmd
   "textutil -inputencoding UTF-8 -stdin -format html -convert rtf -stdout | pbcopy"
   "Command to copy formatted text on osX."
+  ;; This may work better on Chrome and Slack
+  ;; "hexdump -ve '1/1 \"%.2x\"' | xargs printf \"set the clipboard to {text:\\\" \\\", «class HTML»:«data HTML%s»}\" | osascript -"
   :group 'ox-clip
   :type 'string)
 
