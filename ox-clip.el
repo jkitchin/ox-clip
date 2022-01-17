@@ -1,7 +1,7 @@
 
 ;;; ox-clip.el --- Cross-platform formatted copying for org-mode
 
-;; Copyright(C) 2016 John Kitchin
+;; Copyright(C) 2016-2021 John Kitchin
 
 ;; Author: John Kitchin <jkitchin@andrew.cmu.edu>
 ;; URL: https://github.com/jkitchin/ox-clip
