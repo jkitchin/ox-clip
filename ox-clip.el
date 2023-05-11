@@ -80,10 +80,13 @@
 
 
 (defcustom ox-clip-linux-cmd
-  "xclip -verbose -i \"%f\" -t text/html -selection clipboard"
+  "xclip -target %t -selection clipboard -in"
   "Command to copy formatted text on linux.
-You must include %f. It will be converted to a generated
-temporary filename later."
+Optional input files are appended to the command as additional
+arguments or clipboard content is sent to the process standard
+input.  Substitution \"%t\" is replaced by mime type (target).
+In earlier versions \"-verbose\" option were required
+to avoid problems but it is not needed any more."
   :group 'ox-clip
   :type 'string)
 
@@ -375,6 +378,35 @@ Used when creating preview images for copying."
 		   (file-name-directory (or load-file-name (locate-library "ox-clip"))))
     (insert ox-clip-w32-py)))
 
+(defun ox-clip-linux-start-cmd (mime &rest files)
+  "Start xclip process.
+
+`start-process' is avoided since it creates a process with
+`pty' :connection-type.  In that case, unless \"-verbose\" option
+is passed to xclip, it forks, then the parent process exits
+and the child is killed by SIGHUP.  Pseudoterminal is redundant
+for non-interactive process, so low level `make-process'
+and lighter :connection-type `pipe' are used.
+:noquery prevents dialogue on emacs quit if `start-process' function
+is combined with \"-verbose\" xclip option.
+In the case of `make-process' it has a little value.
+Forked process could remain alive after finishing of Emacs.
+:filter is used to make mistakes in `ox-clip-linux-cmd' value prominent.
+Otherwise errors reported to some buffer are rather hidden from users.
+
+MIME is clipboard content type, e.g. \"text/html\".
+It is substituted to \"%t\" placeholder of `ox-clip-linux-cmd'.
+
+If FILES are not passed, clipboard content should be sent
+to the process stdin.  It would be better to add \"%f\" substitution
+to the command variable if xclip were supported \"-\" argument for stdin."
+  (let ((command (append
+		  (mapcar (lambda (arg) (format-spec arg (list (cons ?t mime))))
+			  (split-string-and-unquote ox-clip-linux-cmd))
+		  files)))
+    (make-process :name "ox-clip" :connection-type 'pipe :buffer "*Messages*"
+		  :filter (lambda (proc string) (message "ox-clip: %s" string))
+		  :noquery 't :command command)))
 
 ;;;###autoload
 (defun ox-clip-formatted-copy (r1 r2)
@@ -401,15 +433,9 @@ R1 and R2 define the selected region."
                (point-max)
                ox-clip-osx-cmd)))
            ((eq system-type 'gnu/linux)
-            ;; For some reason shell-command on region does not work with xclip.
-	    (let* ((tmpfile (make-temp-file "ox-clip-" nil ".html"
-					    (with-current-buffer buf (buffer-string))))
-		   (proc (apply
-			  'start-process "ox-clip" "*ox-clip*"
-			  (split-string-and-unquote
-			   (format-spec ox-clip-linux-cmd
-					`((?f . ,tmpfile))) " "))))
-	      (set-process-query-on-exit-flag proc nil))))
+	    (let ((proc (ox-clip-linux-start-cmd "text/html")))
+	      (with-current-buffer buf (process-send-region proc (point-min) (point-max))
+				   (process-send-eof proc)))))
           (kill-buffer buf)))
     ;; Use htmlize when not in org-mode.
     (let ((html (htmlize-region-for-paste r1 r2)))
@@ -429,13 +455,9 @@ R1 and R2 define the selected region."
            (point-max)
            ox-clip-osx-cmd)))
        ((eq system-type 'gnu/linux)
-	(let* ((tmpfile (make-temp-file "ox-clip-" nil ".html" html))
-	       (proc (apply
-		      'start-process "ox-clip" "*ox-clip*"
-		      (split-string-and-unquote
-		       (format-spec ox-clip-linux-cmd
-				    `((?f . ,tmpfile))) " "))))
-	  (set-process-query-on-exit-flag proc nil)))))))
+	(let ((proc (ox-clip-linux-start-cmd "text/html")))
+	  (process-send-string proc html)
+	  (process-send-eof proc)))))))
 
 
 ;; * copy images / latex fragments to the clipboard
@@ -501,10 +523,8 @@ images. Currently only works on Linux."
 	(do-applescript
 	 (format "set the clipboard to POSIX file \"%s\"" (expand-file-name image-file))))
        ((eq system-type 'gnu/linux)
-	(call-process-shell-command
-	 (format "xclip -selection clipboard -t image/%s -i %s"
-		 (file-name-extension image-file)
-		 image-file)))))
+	(ox-clip-linux-start-cmd (format "image/%s" (file-name-extension image-file))
+				 image-file))))
     (message "Copied %s" image-file)))
 
 (provide 'ox-clip)
