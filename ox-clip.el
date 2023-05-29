@@ -377,15 +377,21 @@ Used when creating preview images for copying."
 
 
 ;;;###autoload
-(defun ox-clip-formatted-copy (r1 r2)
+(defun ox-clip-formatted-copy (r1 r2 &optional arg)
   "Export the selected region to HTML and copy it to the clipboard.
 R1 and R2 define the selected region."
-  (interactive "r")
+  (interactive (list (region-beginning) (region-end) current-prefix-arg))
+  (when arg
+    (org-mark-subtree))
   (copy-region-as-kill r1 r2)
   (if (equal major-mode 'org-mode)
       (save-window-excursion
         (let* ((org-html-with-latex 'dvipng)
-	       (buf (org-export-to-buffer 'html "*Formatted Copy*" nil nil t t))
+	       ;; by default we only copy visible stuff, i.e. it should look like you see
+	       ;; but if you choose subtreep, we copy it all
+	       (subtreep (not  (null arg)))
+	       (visible-only (not subtreep))
+	       (buf (org-export-to-buffer 'html "*Formatted Copy*" nil subtreep visible-only t))
                (html (with-current-buffer buf (buffer-string))))
           (cond
            ((eq system-type 'windows-nt)
