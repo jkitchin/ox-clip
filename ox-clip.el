@@ -377,19 +377,32 @@ Used when creating preview images for copying."
 
 
 ;;;###autoload
-(defun ox-clip-formatted-copy (r1 r2 &optional arg)
+(defun ox-clip-formatted-copy (r1 r2 &optional subtreep)
   "Export the selected region to HTML and copy it to the clipboard.
-R1 and R2 define the selected region."
-  (interactive (list (region-beginning) (region-end) current-prefix-arg))
-  (when arg
-    (org-mark-subtree))
-  (copy-region-as-kill r1 r2)
+R1 and R2 define the selected region.
+
+If SUBTREEP (interactively, the prefix argument) is non-nil then
+export the current org-mode subtree, including hidden content."
+  (interactive (list
+		;; This seems wonky, but it turns out you can get non-selected
+		;; regions from these when the region is not active. Using "rP"
+		;; leads to false selections imo. I think this is less
+		;; surprising.
+		(when (region-active-p) (region-beginning))
+		(when (region-active-p) (region-end))
+		current-prefix-arg))
+  
+  ;; Put a copy in the kill ring in case you want it in Emacs.
+  (if (null  subtreep)
+      (copy-region-as-kill r1 r2)
+    (org-mark-subtree)
+    (org-copy-subtree))
+  
   (if (equal major-mode 'org-mode)
       (save-window-excursion
         (let* ((org-html-with-latex 'dvipng)
 	       ;; by default we only copy visible stuff, i.e. it should look like you see
 	       ;; but if you choose subtreep, we copy it all
-	       (subtreep (not  (null arg)))
 	       (visible-only (not subtreep))
 	       (buf (org-export-to-buffer 'html "*Formatted Copy*" nil subtreep visible-only t))
                (html (with-current-buffer buf (buffer-string))))
