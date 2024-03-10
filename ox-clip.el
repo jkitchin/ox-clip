@@ -64,9 +64,10 @@
 	  (expand-file-name
 	   "html-clip-w32.py"
 	   (file-name-directory (or load-file-name (locate-library "ox-clip")))))
-  "Absolute path to html-clip-w32.py."
+  "Usually an absolute path to html-clip-w32.py.
+Could also be an alist of (target . cmd)"
   :group 'ox-clip
-  :type 'string)
+  :type '(choice string (list (cons string string))))
 
 
 (defcustom ox-clip-osx-cmd
@@ -76,18 +77,19 @@
     ;; This may work better on GitHUB
     ("markdown" . "pandoc -f html -t markdown - | grep -v \"^:::\" | sed 's/{#.*}//g' | pbcopy"))
   "Possible commands to copy formatted text on osX.
-This is a list of cons cells that are selected from at copy time."
+This can be a string, or an alist of (target . cmd)."
   :group 'ox-clip
-  :type '(list (cons string string)))
+  :type '(choice string (list (cons string string))))
 
 
 (defcustom ox-clip-linux-cmd
   "xclip -verbose -i \"%f\" -t text/html -selection clipboard"
   "Command to copy formatted text on linux.
-You must include %f. It will be converted to a generated
-temporary filename later."
+This can be a string, or an alist of (target . cmd). You must
+include %f in hte command. It will be converted to a generated
+temporary filename at run-time."
   :group 'ox-clip
-  :type 'string)
+  :type '(choice string (list (cons string string))))
 
 
 (defvar ox-clip-w32-py "#!/usr/bin/env python
