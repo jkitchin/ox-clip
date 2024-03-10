@@ -1,7 +1,7 @@
 
 ;;; ox-clip.el --- Cross-platform formatted copying for org-mode
 
-;; Copyright(C) 2016-2021 John Kitchin
+;; Copyright(C) 2016-2024 John Kitchin
 
 ;; Author: John Kitchin <jkitchin@andrew.cmu.edu>
 ;; URL: https://github.com/jkitchin/ox-clip
@@ -71,12 +71,15 @@
 
 
 (defcustom ox-clip-osx-cmd
-  "textutil -inputencoding UTF-8 -stdin -format html -convert rtf -stdout | pbcopy"
-  "Command to copy formatted text on osX."
+  '(("default" . "textutil -inputencoding UTF-8 -stdin -format html -convert rtf -stdout | pbcopy")
+    ("html" . "hexdump -ve '1/1 \"%.2x\"' | xargs printf \"set the clipboard to {text:\\\" \\\", «class HTML»:«data HTML%s»}\" | osascript -")
+    ("markdown" . "pandoc -f html -t markdown - | grep -v \"^:::\" | sed 's/{#.*}//g' | pbcopy"))
+  "Possible commands to copy formatted text on osX.
+This is a list of cons cells that are selected from at copy time."
   ;; This may work better on Chrome and Slack
   ;; "hexdump -ve '1/1 \"%.2x\"' | xargs printf \"set the clipboard to {text:\\\" \\\", «class HTML»:«data HTML%s»}\" | osascript -"
   :group 'ox-clip
-  :type 'string)
+  :type '(list (cons string string)))
 
 
 (defcustom ox-clip-linux-cmd
@@ -86,6 +89,7 @@ You must include %f. It will be converted to a generated
 temporary filename later."
   :group 'ox-clip
   :type 'string)
+
 
 (defvar ox-clip-w32-py "#!/usr/bin/env python
 # Adapted from http://code.activestate.com/recipes/474121-getting-html-from-the-windows-clipboard/
@@ -377,6 +381,17 @@ Used when creating preview images for copying."
 
 
 ;;;###autoload
+(defun ox-clip-get-command (options)
+  "Get the command form OPTIONS.
+OPTIONS is one of `ox-clip-w32-cmd', `ox-clip-osx-cmd', or
+`ox-clip-linux-cmd'. Those may be a string, or a list of
+candidates to choose from."
+  (if (stringp options)
+      options
+    (cdr (assoc (completing-read "Copy to: " options) options))))
+
+
+;;;###autoload
 (defun ox-clip-formatted-copy (r1 r2 &optional subtreep)
   "Export the selected region to HTML and copy it to the clipboard.
 R1 and R2 define the selected region.
@@ -412,13 +427,13 @@ export the current org-mode subtree, including hidden content."
               (shell-command-on-region
                (point-min)
                (point-max)
-               ox-clip-w32-cmd)))
+               (ox-clip-get-command ox-clip-w32-cmd))))
            ((eq system-type 'darwin)
             (with-current-buffer buf
               (shell-command-on-region
                (point-min)
                (point-max)
-               ox-clip-osx-cmd)))
+               (ox-clip-get-command ox-clip-osx-cmd))))
            ((eq system-type 'gnu/linux)
             ;; For some reason shell-command on region does not work with xclip.
 	    (let* ((tmpfile (make-temp-file "ox-clip-" nil ".html"
@@ -426,8 +441,10 @@ export the current org-mode subtree, including hidden content."
 		   (proc (apply
 			  'start-process "ox-clip" "*ox-clip*"
 			  (split-string-and-unquote
-			   (format-spec ox-clip-linux-cmd
-					`((?f . ,tmpfile))) " "))))
+			   (format-spec
+			    (ox-clip-get-command ox-clip-linux-cmd)
+			    `((?f . ,tmpfile)))
+			   " "))))
 	      (set-process-query-on-exit-flag proc nil))))
           (kill-buffer buf)))
     ;; Use htmlize when not in org-mode.
@@ -439,21 +456,23 @@ export the current org-mode subtree, including hidden content."
           (shell-command-on-region
            (point-min)
            (point-max)
-           ox-clip-w32-cmd)))
+           (ox-clip-get-command ox-clip-w32-cmd))))
        ((eq system-type 'darwin)
         (with-temp-buffer
           (insert html)
           (shell-command-on-region
            (point-min)
            (point-max)
-           ox-clip-osx-cmd)))
+           (ox-clip-get-command ox-clip-osx-cmd))))
        ((eq system-type 'gnu/linux)
 	(let* ((tmpfile (make-temp-file "ox-clip-" nil ".html" html))
 	       (proc (apply
 		      'start-process "ox-clip" "*ox-clip*"
 		      (split-string-and-unquote
-		       (format-spec ox-clip-linux-cmd
-				    `((?f . ,tmpfile))) " "))))
+		       (format-spec
+			(ox-clip-get-command ox-clip-linux-cmd)
+			`((?f . ,tmpfile)))
+		       " "))))
 	  (set-process-query-on-exit-flag proc nil)))))))
 
 
@@ -461,6 +480,7 @@ export the current org-mode subtree, including hidden content."
 (defun ox-clip-ov-at ()
   "Get overlay at point.  A helper to avoid dependency on ov.el."
   (car (overlays-at (point))))
+
 
 ;;;###autoload
 (defun ox-clip-image-to-clipboard (&optional scale)
@@ -525,6 +545,7 @@ images. Currently only works on Linux."
 		 (file-name-extension image-file)
 		 image-file)))))
     (message "Copied %s" image-file)))
+
 
 (provide 'ox-clip)
 
