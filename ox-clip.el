@@ -1,4 +1,3 @@
-
 ;;; ox-clip.el --- Cross-platform formatted copying for org-mode
 
 ;; Copyright(C) 2016-2024 John Kitchin
@@ -72,12 +71,12 @@
 
 (defcustom ox-clip-osx-cmd
   '(("default" . "textutil -inputencoding UTF-8 -stdin -format html -convert rtf -stdout | pbcopy")
+    ;; This may work better on Chrome and Slack
     ("html" . "hexdump -ve '1/1 \"%.2x\"' | xargs printf \"set the clipboard to {text:\\\" \\\", «class HTML»:«data HTML%s»}\" | osascript -")
+    ;; This may work better on GitHUB
     ("markdown" . "pandoc -f html -t markdown - | grep -v \"^:::\" | sed 's/{#.*}//g' | pbcopy"))
   "Possible commands to copy formatted text on osX.
 This is a list of cons cells that are selected from at copy time."
-  ;; This may work better on Chrome and Slack
-  ;; "hexdump -ve '1/1 \"%.2x\"' | xargs printf \"set the clipboard to {text:\\\" \\\", «class HTML»:«data HTML%s»}\" | osascript -"
   :group 'ox-clip
   :type '(list (cons string string)))
 
@@ -363,6 +362,7 @@ if __name__ == '__main__':
 "
   "Windows Python Script for copying formatted text.")
 
+
 (defcustom ox-clip-default-latex-scale 3
   "Default scale to use in `org-format-latex-options'.
 Used when creating preview images for copying."
@@ -397,7 +397,7 @@ candidates to choose from."
 R1 and R2 define the selected region.
 
 If SUBTREEP (interactively, the prefix argument) is non-nil then
-export the current org-mode subtree, including hidden content."
+export the current `org-mode' subtree, including hidden content."
   (interactive (list
 		;; This seems wonky, but it turns out you can get non-selected
 		;; regions from these when the region is not active. Using "rP"
